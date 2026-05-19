@@ -12,7 +12,7 @@ def moeda(valor):
     return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 st.title("💡 Calculadora de Economia de Energia")
-st.markdown("Simule a economia gerada pela redução da quantidade de lâmpadas em operação.")
+st.markdown("Simule a economia com base no uso real das lâmpadas.")
 
 st.divider()
 
@@ -20,38 +20,55 @@ col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     lampadas_anteriores = st.number_input(
-        "Quantidade anterior de lâmpadas",
+        "Qtd lâmpadas (ANTES)",
         min_value=0,
-        value=200,
-        step=1
+        value=200
     )
 
 with col2:
     lampadas_atuais = st.number_input(
-        "Quantidade atual de lâmpadas",
+        "Qtd lâmpadas (ATUAL)",
         min_value=0,
-        value=150,
-        step=1
+        value=150
     )
 
 with col3:
-    consumo_kwh_mes = st.number_input(
-        "Consumo por lâmpada no mês (kWh)",
+    potencia_watts = st.number_input(
+        "Potência por lâmpada (Watts)",
         min_value=0.0,
-        value=10.0,
-        step=0.1
+        value=100.0
     )
 
 with col4:
     valor_kwh = st.number_input(
         "Valor do kWh (R$)",
         min_value=0.0,
-        value=0.90,
-        step=0.01
+        value=0.90
     )
 
-custo_anterior_mes = lampadas_anteriores * consumo_kwh_mes * valor_kwh
-custo_atual_mes = lampadas_atuais * consumo_kwh_mes * valor_kwh
+# NOVA LINHA
+col5, col6 = st.columns(2)
+
+with col5:
+    horas_dia = st.number_input(
+        "Horas por dia",
+        min_value=0.0,
+        value=10.0
+    )
+
+with col6:
+    dias_mes = st.number_input(
+        "Dias trabalhados no mês",
+        min_value=0,
+        value=22
+    )
+
+# 🔥 CÁLCULO REAL
+consumo_kwh_por_lampada = (potencia_watts * horas_dia * dias_mes) / 1000
+
+custo_anterior_mes = lampadas_anteriores * consumo_kwh_por_lampada * valor_kwh
+custo_atual_mes = lampadas_atuais * consumo_kwh_por_lampada * valor_kwh
+
 economia_mes = custo_anterior_mes - custo_atual_mes
 economia_12_meses = economia_mes * 12
 
@@ -79,7 +96,7 @@ fig.add_trace(go.Scatter(
     x=df["Mês"],
     y=df["Gasto anterior acumulado"],
     mode="lines+markers",
-    name="Gasto anterior acumulado",
+    name="Gasto anterior",
     line=dict(color="red", width=4)
 ))
 
@@ -87,7 +104,7 @@ fig.add_trace(go.Scatter(
     x=df["Mês"],
     y=df["Gasto atual acumulado"],
     mode="lines+markers",
-    name="Gasto atual acumulado",
+    name="Gasto atual",
     line=dict(color="orange", width=4)
 ))
 
@@ -95,27 +112,18 @@ fig.add_trace(go.Scatter(
     x=df["Mês"],
     y=df["Economia acumulada"],
     mode="lines+markers",
-    name="Economia acumulada",
+    name="Economia",
     line=dict(color="green", width=4)
 ))
 
 fig.update_layout(
     title="Projeção acumulada em 12 meses",
     xaxis_title="Mês",
-    yaxis_title="Valor acumulado em R$",
-    template="plotly_white",
-    height=550,
-    legend=dict(
-        orientation="h",
-        y=1.1,
-        x=0.5,
-        xanchor="center"
-    )
+    yaxis_title="R$",
+    template="plotly_white"
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
 st.subheader("📊 Projeção mês a mês")
 st.dataframe(df, use_container_width=True)
-
-st.caption("Simulador desenvolvido para análise de economia com redução de lâmpadas em operação.")
